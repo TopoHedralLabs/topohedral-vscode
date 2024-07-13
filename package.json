@@ -14,8 +14,15 @@
   "contributes": {
     "commands": [
       {
-        "command": "topohedral-vscode.helloWorld",
-        "title": "Hello World"
+        "command": "topohedral-vscode.addFold",
+        "title": "Add Fold"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "topohedral-vscode.addFold",
+        "key": "F8",
+        "when": "editorTextFocus && !editorReadonly"
       }
     ]
   },
@@ -25,18 +32,25 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "test": "node ./out/test/runTest.js",
+    "unittest": "mocha -r ts-node/register src/unit-tests/**/*.test.ts"
   },
   "devDependencies": {
-    "@types/vscode": "^1.91.0",
+    "@types/chai": "^4.3.16",
     "@types/mocha": "^10.0.1",
-    "@types/node": "16.x",
+    "@types/node": "^16.18.101",
+    "@types/vscode": "^1.91.0",
     "@typescript-eslint/eslint-plugin": "^6.4.1",
     "@typescript-eslint/parser": "^6.4.1",
+    "@vscode/test-electron": "^2.3.4",
+    "chai": "^5.1.1",
     "eslint": "^8.47.0",
     "glob": "^10.3.3",
-    "mocha": "^10.2.0",
-    "typescript": "^5.1.6",
-    "@vscode/test-electron": "^2.3.4"
+    "mocha": "^10.6.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.3"
+  },
+  "dependencies": {
+    "typescript-collections": "^1.3.3"
   }
 }
