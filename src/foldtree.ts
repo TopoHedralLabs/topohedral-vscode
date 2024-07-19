@@ -50,6 +50,10 @@ export class FoldNode {
     isRoot() {
         return this.parent === null;
     }
+
+    onBoundary(line: number): boolean {
+        return this.start == line || this.end == line;
+    }
 }
 
 export interface FoldNodeVisiitor {

@@ -21,12 +21,21 @@
       {
         "command": "topohedral-vscode.addFold",
         "title": "Add Fold"
+      }, 
+      {
+        "command": "topohedral-vscode.removeFold",
+        "title": "Remove Fold"
       }
     ],
     "keybindings": [
       {
         "command": "topohedral-vscode.addFold",
         "key": "F8",
+        "when": "editorTextFocus && !editorReadonly"
+      },
+      {
+        "command": "topohedral-vscode.removeFold",
+        "key": "F9",
         "when": "editorTextFocus && !editorReadonly"
       }
     ]
