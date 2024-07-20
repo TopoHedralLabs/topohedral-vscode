@@ -7,10 +7,7 @@ import { Logger } from './logger';
 
 
 function documentOk(document: vscode.TextDocument): boolean {
-    return document.uri.scheme !== 'output' &&
-        vscode.window.activeTextEditor !== undefined &&
-        document === vscode.window.activeTextEditor.document &&
-        (document.languageId in languageCommentMap);
+    return document.uri.scheme !== 'output' && document.languageId in languageCommentMap;
 }
 
 // This method is called when your extension is activated
@@ -23,12 +20,13 @@ export function activate(context: vscode.ExtensionContext) {
 
     {
         Logger.info('adding onDidOpenTextDocument handler');
-        let disposable = vscode.workspace.onDidOpenTextDocument((document) => {
+        let disposable = vscode.workspace.onDidOpenTextDocument(async (document) => {
             if (documentOk(document)) {
                 Logger.info('onDidOpenTextDocument handler called for ' + document.uri.toString());
                 Logger.info('is of type ' + document.languageId);
                 Logger.info('creating new fold tree for' + document.uri.toString());
                 state.createFoldTree(document);
+                await vscode.commands.executeCommand("executeFoldingRangeProvider", document.uri);
             }
         });
         context.subscriptions.push(disposable);
@@ -93,6 +91,17 @@ export function activate(context: vscode.ExtensionContext) {
             if (editor && documentOk(editor.document)) {
                 Logger.info("Copying fold for file " + editor.document.uri.toString());
                 state.copyFold();
+            }
+        });
+    }
+
+    {
+        Logger.info("Registering topohedral-vscode.cutFold");
+        let disposable = vscode.commands.registerCommand('topohedral-vscode.cutFold', () => {
+            const editor = vscode.window.activeTextEditor;
+            if (editor && documentOk(editor.document)) {
+                Logger.info("Cutting fold for file " + editor.document.uri.toString());
+                state.cutFold();
             }
         });
     }
