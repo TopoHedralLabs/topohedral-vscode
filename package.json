@@ -25,6 +25,14 @@
       {
         "command": "topohedral-vscode.removeFold",
         "title": "Remove Fold"
+      }, 
+      {
+        "command": "topohedral-vscode.copyFold",
+        "title": "Copy Fold"
+      }, 
+      {
+        "command": "topohedral-vscode.cutFold",
+        "title": "Cut Fold"
       }
     ],
     "keybindings": [
@@ -41,6 +49,11 @@
       {
         "command": "topohedral-vscode.copyFold",
         "key": "F9", 
+        "when": "editorTextFocus && !editorReadonly"
+      },
+      {
+        "command": "topohedral-vscode.cutFold",
+        "key": "shift+F9", 
         "when": "editorTextFocus && !editorReadonly"
       }
     ]
