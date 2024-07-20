@@ -3,27 +3,31 @@
 import * as vscode from 'vscode';
 
 import { FoldTree, languageCommentMap } from './foldtree';
-import { start } from 'repl';
+import { Logger } from './logger';
+
+
+function documentOk(document: vscode.TextDocument): boolean {
+    return document.uri.scheme !== 'output' &&
+        vscode.window.activeTextEditor !== undefined &&
+        document === vscode.window.activeTextEditor.document &&
+        (document.languageId in languageCommentMap);
+}
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 
-    // Use the console to output diagnostic information (outputChannel.appendLine) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
-    const outputChannel = vscode.window.createOutputChannel('Topohedral');
-    outputChannel.appendLine('Congratulations, your extension "topohedral-vscode" is now active!');
-
-    let state = new TopoHedralVscodeState(outputChannel);
+    Logger.init();
+    Logger.info('Congratulations, your extension "topohedral-vscode" is now active!');
+    let state = new TopoHedralVscodeState();
 
     {
-        outputChannel.appendLine('adding onDidOpenTextDocument handler');
+        Logger.info('adding onDidOpenTextDocument handler');
         let disposable = vscode.workspace.onDidOpenTextDocument((document) => {
-            outputChannel.appendLine('onDidOpenTextDocument handler called for ' + document.uri.toString());
-            outputChannel.appendLine('is of type ' + document.languageId);
-            if (languageCommentMap[document.languageId]) {
-
-                outputChannel.appendLine('creating new fold tree for' + document.uri.toString());
+            if (documentOk(document)) {
+                Logger.info('onDidOpenTextDocument handler called for ' + document.uri.toString());
+                Logger.info('is of type ' + document.languageId);
+                Logger.info('creating new fold tree for' + document.uri.toString());
                 state.createFoldTree(document);
             }
         });
@@ -31,11 +35,11 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     {
-        outputChannel.appendLine('adding onDidCloseTextDocument handler');
+        Logger.info('adding onDidCloseTextDocument handler');
         let disposable = vscode.workspace.onDidCloseTextDocument((document) => {
-            outputChannel.appendLine('onDidCloseTextDocument handler called');
-            outputChannel.appendLine('is of type ' + document.languageId);
-            if (languageCommentMap[document.languageId]) {
+            if (documentOk(document)) {
+                Logger.info('onDidCloseTextDocument handler called');
+                Logger.info('is of type ' + document.languageId);
                 state.deleteFoldTree(document);
             }
         });
@@ -43,23 +47,13 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     {
-        outputChannel.appendLine('adding onDidSaveTextDocument handler');
-        let disposable = vscode.workspace.onDidSaveTextDocument((document) => {
-            outputChannel.appendLine('onDidSaveTextDocument handler called');
-        });
-        context.subscriptions.push(disposable);
-    }
-
-    {
-        outputChannel.appendLine('adding onDidChangeTextDocument handler');
+        Logger.info('adding onDidChangeTextDocument handler');
         let disposable = vscode.workspace.onDidChangeTextDocument((event) => {
 
-            if (event.document.uri.scheme != "output") {
-                outputChannel.appendLine('onDidChangeTextDocument handler called for ' + event.document.uri.toString());
-                if (languageCommentMap[event.document.languageId]) {
-                    outputChannel.appendLine('creating new fold tree for ' + event.document.uri.toString());
-                    state.rebuildFoldTree(event.document)
-                }
+            if (documentOk(event.document)) {
+                Logger.info('onDidChangeTextDocument handler called for ' + event.document.uri.toString());
+                Logger.info('Rebuilding fold tree for ' + event.document.uri.toString());
+                state.rebuildFoldTree(event.document)
 
             }
         });
@@ -68,13 +62,11 @@ export function activate(context: vscode.ExtensionContext) {
 
     // .............................. commands
     {
-        outputChannel.appendLine('Registering topohedral-vscode.addFold');
+        Logger.info('Registering topohedral-vscode.addFold');
         let disposable = vscode.commands.registerCommand('topohedral-vscode.addFold', () => {
             const editor = vscode.window.activeTextEditor;
-            if (editor) {
-                const document = editor.document;
-                const selection = editor.selection;
-                outputChannel.appendLine("Adding fold for file " + document.uri.toString());
+            if (editor && documentOk(editor.document)) {
+                Logger.info("Adding fold for file " + editor.document.uri.toString());
                 state.addFold();
             }
         });
@@ -82,23 +74,33 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     {
-        outputChannel.appendLine('Registering topohedral-vscode.removeFold');
+        Logger.info('Registering topohedral-vscode.removeFold');
         let disposable = vscode.commands.registerCommand('topohedral-vscode.removeFold', () => {
             const editor = vscode.window.activeTextEditor;
-            if (editor) {
-                const document = editor.document;
-                const selection = editor.selection;
-                outputChannel.appendLine("Removing fold for file " + document.uri.toString());
+            if (editor && documentOk(editor.document)) {
+                Logger.info("Removing fold for file " + editor.document.uri.toString());
                 state.removeFold();
             }
         });
         context.subscriptions.push(disposable);
     }
 
+
+    {
+        Logger.info("Registering topohedral-vscode.copyFold");
+        let disposable = vscode.commands.registerCommand('topohedral-vscode.copyFold', () => {
+            const editor = vscode.window.activeTextEditor;
+            if (editor && documentOk(editor.document)) {
+                Logger.info("Copying fold for file " + editor.document.uri.toString());
+                state.copyFold();
+            }
+        });
+    }
+
     // .............................. folding provider 
-    outputChannel.appendLine('Registernig the folding provider');
+    Logger.info('Registernig the folding provider');
     Object.keys(languageCommentMap).forEach(language => {
-        outputChannel.appendLine('Registering folding provider for ' + language);
+        Logger.info('Registering folding provider for ' + language);
         const disposableFolding = vscode.languages.registerFoldingRangeProvider(
             { scheme: 'file', language }, state
         );
@@ -114,10 +116,6 @@ export function deactivate() { }
 class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
     private foldTrees: Map<string, FoldTree> = new Map();
 
-    constructor(private channel: vscode.OutputChannel) {
-        this.channel = channel;
-    }
-    //..............................................................................................
 
     /**
      * Provides the folding ranges for the given text document.
@@ -139,7 +137,7 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
         let tstart = performance.now()
         const ranges: vscode.FoldingRange[] = [];
 
-        this.channel.appendLine('provideFoldingRanges called for ' + document.uri.toString());
+        Logger.info('provideFoldingRanges called for ' + document.uri.toString());
         const foldTree = this.foldTrees.get(document.uri.toString());
 
         if (foldTree) {
@@ -152,11 +150,20 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
 
         let tend = performance.now()
         let elapsed = tend - tstart;
-        this.channel.appendLine(`provideFoldingRanges: ${elapsed}`);
+        Logger.info(`provideFoldingRanges: ${elapsed}`);
         return ranges;
     }
     //..............................................................................................
 
+    /**
+     * Adds a fold marker around the selected code block.
+     *
+     * This method is called when the user wants to add a fold marker around a selected
+     * code block. It first determines the start and end lines of the selection, then
+     * inserts the appropriate fold marker comments at the beginning and end of the
+     * selected block. The indentation of the fold markers matches the indentation of
+     * the first and last lines of the selected block.
+     */
     async addFold() {
 
         const editor = vscode.window.activeTextEditor;
@@ -210,6 +217,14 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
     }
     //..............................................................................................
 
+    /**
+     * Removes a fold from the active text editor.
+     * 
+     * This method checks if the active text editor has a selection, and if the selection is empty. 
+     * If so, it retrieves the fold tree for the current document and finds the fold node at the 
+     * cursor position. If the cursor is at the start or end of the fold, the method deletes the 
+     * fold by removing the start and end fold markers from the document.
+     */
     async removeFold() {
 
         const editor = vscode.window.activeTextEditor;
@@ -223,7 +238,7 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
 
         if (foldTree && editor.selection.isEmpty) {
             const pos = editor.selection.active;
-            let node = foldTree.nodeAt(pos.line);   
+            let node = foldTree.nodeAt(pos.line);
             if (node && ((pos.line == node.start) || (pos.line == node.end))) {
                 const startLineLen = document.lineAt(node.start).text.length;
                 const endLineLen = document.lineAt(node.end).text.length;
@@ -232,6 +247,101 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
                 await editor.edit(editBuilder => {
                     editBuilder.delete(range2);
                     editBuilder.delete(range1);
+                })
+            }
+        }
+    }
+    //..............................................................................................
+
+    /**
+     * Deletes a fold from the active text editor.
+     * 
+     * This method checks if the active text editor has a selection, and if the selection is empty. 
+     * If so, it retrieves the fold tree for the current document and finds the fold node at the 
+     * cursor position. If the cursor is at the start or end of the fold, the method deletes the 
+     * fold by removing the start and end fold markers from the document.
+     */
+    async deleteFold() {
+
+        const editor = vscode.window.activeTextEditor;
+
+        if (!editor) {
+            return;
+        }
+
+        const document = editor.document
+        const foldTree = this.foldTrees.get(document.uri.toString());
+
+        if (foldTree && editor.selection.isEmpty) {
+            const pos = editor.selection.active;
+            let node = foldTree.nodeAt(pos.line);
+            if (node && ((pos.line == node.start) || (pos.line == node.end))) {
+                const startLineLen = document.lineAt(node.start).text.length;
+                const endLineLen = document.lineAt(node.end).text.length;
+                const range1 = new vscode.Range(node.start, 0, node.start, startLineLen);
+                const range2 = new vscode.Range(node.end, 0, node.end, startLineLen);
+                await editor.edit(editBuilder => {
+                    editBuilder.delete(range2);
+                    editBuilder.delete(range1);
+                })
+            }
+        }
+    }
+    //..............................................................................................
+
+    /**
+     * Copies the text of the current fold to the clipboard.
+     *
+     * This method checks if there is an active editor and a fold tree associated with the current 
+     * document. If so, and the * editor's selection is empty, it retrieves the fold node at the 
+     * current cursor position. If the cursor is at the * start of the fold, it copies the text 
+     * of the entire fold to the clipboard.
+     */
+    async copyFold() {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            return;
+        }
+        const document = editor.document
+        const foldTree = this.foldTrees.get(document.uri.toString());
+
+        if (foldTree && editor.selection.isEmpty) {
+            const pos = editor.selection.active;
+            let node = foldTree.nodeAt(pos.line);
+            if (node && ((pos.line == node.start))) {
+                const endLineLen = document.lineAt(node.end).text.length;
+                const range = new vscode.Range(node.start, 0, node.end, endLineLen);
+                await vscode.env.clipboard.writeText(document.getText(range));
+            }
+        }
+    }
+    //..............................................................................................
+
+    /**
+     * Cuts the text of the current fold and copies it to the clipboard.
+     *
+     * This method checks if there is an active editor and a fold tree associated with the current document. If so, and the
+     * editor's selection is empty, it retrieves the fold node at the current cursor position. If the cursor is at the
+     * start of the fold, it copies the text of the entire fold to the clipboard and then deletes the fold from the document.
+     */
+    async cutFold() {
+
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            return;
+        }
+        const document = editor.document
+        const foldTree = this.foldTrees.get(document.uri.toString());
+
+        if (foldTree && editor.selection.isEmpty) {
+            const pos = editor.selection.active;
+            let node = foldTree.nodeAt(pos.line);
+            if (node && ((pos.line == node.start))) {
+                const endLineLen = document.lineAt(node.end).text.length;
+                const range = new vscode.Range(node.start, 0, node.end, endLineLen);
+                await vscode.env.clipboard.writeText(document.getText(range));
+                await editor.edit(editBuilder => {
+                    editBuilder.delete(range);
                 })
             }
         }
@@ -257,12 +367,12 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
         }
 
         let newFoldTree = new FoldTree(content, document.languageId);
-        this.channel.appendLine('new fold tree created for \n' + document.uri.toString());
+        Logger.info('new fold tree created for \n' + document.uri.toString());
         this.foldTrees.set(document.uri.toString(), new FoldTree(content, document.languageId));
 
         let t2 = performance.now()
         let elapsed = t2 - t1;
-        this.channel.appendLine(`createFoldTree: ${elapsed}`);
+        Logger.info(`createFoldTree: ${elapsed}`);
     }
     //..............................................................................................
 
@@ -277,50 +387,20 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
      */
     deleteFoldTree(document: vscode.TextDocument) {
         let t1 = performance.now()
-
-        this.channel.appendLine(`Deleting fold tree for ${document.uri.toString()}`);
+        Logger.info(`Deleting fold tree for ${document.uri.toString()}`);
         this.foldTrees.delete(document.uri.toString());
 
         let t2 = performance.now()
         let elapsed = t2 - t1;
-        this.channel.appendLine(`deleteFoldTree: ${elapsed}`);
+        Logger.info(`deleteFoldTree: ${elapsed}`);
     }
     //..............................................................................................
 
     rebuildFoldTree(document: vscode.TextDocument) {
         let t1 = performance.now()
-        this.channel.appendLine(`Rebuilding fold tree for ${document.uri.toString()}`)
+        Logger.info(`Rebuilding fold tree for ${document.uri.toString()}`)
         this.deleteFoldTree(document)
         this.createFoldTree(document)
-    }
-    //..............................................................................................
-
-    /**
-     * TOOD implement this
-     * Updates the fold tree for a document when its content changes.
-     * 
-     * This method is called when a text document is changed, and it updates the
-     * corresponding fold tree to reflect the changes. It iterates through the
-     * content changes and updates the fold tree accordingly.
-     * 
-     * @param event - The text document change event that triggered the update.
-     */
-    updateFoldTree(event: vscode.TextDocumentChangeEvent) {
-        const foldTree = this.foldTrees.get(event.document.uri.toString());
-        if (foldTree) {
-
-            for (const change of event.contentChanges) {
-                // foldTree.update(change.range.start.line, 
-                //                 change.text.split('\n'));
-            }
-        }
-    }
-    //..............................................................................................
-
-    toString() {
-        for (const [key, value] of this.foldTrees) {
-            console.log(key, value);
-        }
     }
     //..............................................................................................
 }

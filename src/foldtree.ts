@@ -7,6 +7,7 @@ interface FoldNodeJson {
     parent: number | null;
     children: number[];
     tag: number;
+    is_folded: boolean;
 }
 
 export const languageCommentMap: { [key: string]: { start: string; end: string } } = {
@@ -23,7 +24,8 @@ export class FoldNode {
         public children: FoldNode[],
         public parent: FoldNode | null,
         public level: number,
-        public tag: number) { }
+        public tag: number, 
+        public is_folded: boolean) { }
 
     toJson() {
         const childrenTags = this.children.map(child => child.tag);
@@ -35,7 +37,8 @@ export class FoldNode {
             level: this.level,
             parent: parentTag,
             children: childrenTags,
-            tag: this.tag
+            tag: this.tag, 
+            is_folded: this.is_folded
         };
     }
 
@@ -219,7 +222,7 @@ export class FoldTree {
     private createNode(start: number, end: number, level: number): FoldNode {
         const tag = this.nextTag;
         this.nextTag += 1;
-        return new FoldNode(start, end, [], null, level, tag);
+        return new FoldNode(start, end, [], null, level, tag, false);
 
     }
 
