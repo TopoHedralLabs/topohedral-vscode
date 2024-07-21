@@ -1,14 +1,15 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import * as fs from 'fs'
+import * as path from 'path'
 
 import { FoldTree, languageCommentMap } from './foldtree';
 import { Logger } from './logger';
+import { get } from 'http';
+import { error } from 'console';
 
 
-function documentOk(document: vscode.TextDocument): boolean {
-    return document.uri.scheme !== 'output' && document.languageId in languageCommentMap;
-}
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -26,7 +27,7 @@ export function activate(context: vscode.ExtensionContext) {
                 Logger.info('is of type ' + document.languageId);
                 Logger.info('creating new fold tree for' + document.uri.toString());
                 state.createFoldTree(document);
-                await vscode.commands.executeCommand("executeFoldingRangeProvider", document.uri);
+                await vscode.commands.executeCommand("vscode.executeFoldingRangeProvider", document.uri);
             }
         });
         context.subscriptions.push(disposable);
@@ -52,7 +53,6 @@ export function activate(context: vscode.ExtensionContext) {
                 Logger.info('onDidChangeTextDocument handler called for ' + event.document.uri.toString());
                 Logger.info('Rebuilding fold tree for ' + event.document.uri.toString());
                 state.rebuildFoldTree(event.document)
-
             }
         });
         context.subscriptions.push(disposable);
@@ -106,8 +106,46 @@ export function activate(context: vscode.ExtensionContext) {
         });
     }
 
+    {
+        Logger.info("Registering topohedral-vcode.rebuildTree");
+        let disposable = vscode.commands.registerCommand("topohedral-vscode.rebuildTree", async () => {
+
+            const editor = vscode.window.activeTextEditor;
+            if (editor && documentOk(editor.document)) {
+                Logger.info("Rebuilding tree for " + editor.document.uri.toString());
+                state.rebuildFoldTree(editor.document)
+                await vscode.commands.executeCommand("vscode.executeFoldingRangeProvider", editor.document.uri);
+            }
+        })
+    }
+
+
+    {
+        Logger.info("Registering topohedral-vscode.newRustFile");
+        let disposable = vscode.commands.registerCommand("topohedral-vscode.newRustFile", async () => {
+            const newDocument = await vscode.workspace.openTextDocument({ language: 'rust' });
+            const editor = await vscode.window.showTextDocument(newDocument);
+            const startSnippet = await getSnippet(context, "modpreamble");
+            const startSnippetObj = new vscode.SnippetString(startSnippet);
+            await editor.insertSnippet(startSnippetObj, new vscode.Position(0, 0));
+
+            let nLines = newDocument.lineCount;
+
+            await editor.edit(editBuilder => {
+                for (let i = 0; i < 10; ++i) {
+                    editBuilder.insert(new vscode.Position(nLines, 0), "\n");
+                }
+            });
+
+            nLines = newDocument.lineCount;
+            const testModSnippet = await getSnippet(context, "testmod");
+            const testModSnippetObj = new vscode.SnippetString(testModSnippet);
+            await editor.insertSnippet(testModSnippetObj, new vscode.Position(nLines-1, 0));
+        });
+    }
+
     // .............................. folding provider 
-    Logger.info('Registernig the folding provider');
+    Logger.info('Registerig the folding provider');
     Object.keys(languageCommentMap).forEach(language => {
         Logger.info('Registering folding provider for ' + language);
         const disposableFolding = vscode.languages.registerFoldingRangeProvider(
@@ -121,6 +159,40 @@ export function activate(context: vscode.ExtensionContext) {
 // This method is called when your extension is deactivated
 export function deactivate() { }
 //..................................................................................................
+
+function documentOk(document: vscode.TextDocument): boolean {
+    return document.uri.scheme !== 'output' && document.languageId in languageCommentMap;
+}
+//..................................................................................................
+
+async function getSnippet(context: vscode.ExtensionContext, snippetId: string): Promise<string> {
+
+    const filePath = path.join(context.extensionPath, 'snippets', 'rust.json');
+
+    return new Promise((resolve, reject) => {
+        fs.readFile(filePath, 'utf8', (err, data) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            try {
+                const snippetsJson = JSON.parse(data);
+                const snippet = snippetsJson[snippetId];
+                let snippetText = "";
+                if (snippet) {
+                    snippetText = Array.isArray(snippet.body) ? snippet.body.join('\n') : snippet.body;
+                    resolve(snippetText);
+                }
+                else {
+                    reject("Snippet does not exist")
+                }
+            } catch (err) {
+                reject(err);
+            }
+        });
+    });
+}
+
 
 class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
     private foldTrees: Map<string, FoldTree> = new Map();
