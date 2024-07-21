@@ -11,9 +11,7 @@ interface FoldNodeJson {
 }
 
 export const languageCommentMap: { [key: string]: { start: string; end: string } } = {
-    "python": { start: "#", end: "" },
     "rust": { start: "//", end: "" },
-    "shell": { start: "#", end: "" },
     "plaintext": { start: "//", end: "" },
 };
 
