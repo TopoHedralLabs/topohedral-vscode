@@ -9,30 +9,46 @@
   "categories": [
     "Other"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TopoHedralLabs/topohedral-vscode.git"
+  },
   "activationEvents": [
-    "onLanguage:plaintext", 
-    "onLanguage:rust", 
-    "onLanguage:python",
-    "onLanguage:shell"
+    "onLanguage:plaintext",
+    "onLanguage:rust"
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "snippets": [
+      {
+        "language": "rust",
+        "path": "./snippets/rust.json"
+      }
+    ],
     "commands": [
       {
         "command": "topohedral-vscode.addFold",
         "title": "Add Fold"
-      }, 
+      },
       {
         "command": "topohedral-vscode.removeFold",
         "title": "Remove Fold"
-      }, 
+      },
       {
         "command": "topohedral-vscode.copyFold",
         "title": "Copy Fold"
-      }, 
+      },
       {
         "command": "topohedral-vscode.cutFold",
         "title": "Cut Fold"
+      },
+      {
+        "command": "topohedral-vscode.rebuildTree", 
+        "title": "Rebuild Tree"
+      },
+      {
+        "command": "topohedral-vscode.newRustFile", 
+        "title": "New Rust File"
       }
     ],
     "keybindings": [
@@ -45,15 +61,20 @@
         "command": "topohedral-vscode.removeFold",
         "key": "shift+F8",
         "when": "editorTextFocus && !editorReadonly"
-      }, 
+      },
       {
         "command": "topohedral-vscode.copyFold",
-        "key": "F9", 
+        "key": "F9",
         "when": "editorTextFocus && !editorReadonly"
       },
       {
         "command": "topohedral-vscode.cutFold",
-        "key": "shift+F9", 
+        "key": "shift+F9",
+        "when": "editorTextFocus && !editorReadonly"
+      },
+      {
+        "command": "topohedral-vscode.rebuildTree",
+        "key": "shift+F10",
         "when": "editorTextFocus && !editorReadonly"
       }
     ]
