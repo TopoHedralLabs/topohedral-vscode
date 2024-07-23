@@ -1,5 +1,6 @@
 {
   "name": "topohedral-vscode",
+  "publisher": "TopoHedralLabs",
   "displayName": "topohedral-vscode",
   "description": "An extension to provide some commonly used shortcuts and operations used in topohedral development",
   "version": "0.0.1",
