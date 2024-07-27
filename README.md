@@ -32,16 +32,6 @@ Currently no known issues. If you find one please report it on the [GitHub Issue
 
 ## Release Notes
 
+See the [CHANGELOG.md](CHANGELOG.md) file for details.
 
-### 0.0.1
-
-Initial release of topohedral-vscode with the following features:
-
-- **Managing VIM-style folds**
-    * Adding folds
-    * Removing folds
-    * Copying and pasting folds
-- **Providing folding ranges based on VIM folds**
-- **Providing snippets for common patterns in TopoHedralLabs's Rust code**
-- **Providing file templates for creating new files which adhere to our coding standards**
 
