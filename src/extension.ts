@@ -1,8 +1,8 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import * as fs from 'fs'
-import * as path from 'path'
+import * as fs from 'fs';
+import * as path from 'path';
 
 import { FoldTree, languageCommentMap } from './foldtree';
 import { Logger } from './logger';
@@ -52,7 +52,7 @@ export function activate(context: vscode.ExtensionContext) {
             if (documentOk(event.document)) {
                 Logger.info('onDidChangeTextDocument handler called for ' + event.document.uri.toString());
                 Logger.info('Rebuilding fold tree for ' + event.document.uri.toString());
-                state.rebuildFoldTree(event.document)
+                state.rebuildFoldTree(event.document);
             }
         });
         context.subscriptions.push(disposable);
@@ -113,10 +113,10 @@ export function activate(context: vscode.ExtensionContext) {
             const editor = vscode.window.activeTextEditor;
             if (editor && documentOk(editor.document)) {
                 Logger.info("Rebuilding tree for " + editor.document.uri.toString());
-                state.rebuildFoldTree(editor.document)
+                state.rebuildFoldTree(editor.document);
                 await vscode.commands.executeCommand("vscode.executeFoldingRangeProvider", editor.document.uri);
             }
-        })
+        });
     }
 
 
@@ -184,7 +184,7 @@ async function getSnippet(context: vscode.ExtensionContext, snippetId: string): 
                     resolve(snippetText);
                 }
                 else {
-                    reject("Snippet does not exist")
+                    reject("Snippet does not exist");
                 }
             } catch (err) {
                 reject(err);
@@ -215,7 +215,7 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
         context: vscode.FoldingContext,
         token: vscode.CancellationToken)
         : vscode.FoldingRange[] | Thenable<vscode.FoldingRange[]> {
-        let tstart = performance.now()
+        let tstart = performance.now();
         const ranges: vscode.FoldingRange[] = [];
 
         Logger.info('provideFoldingRanges called for ' + document.uri.toString());
@@ -229,7 +229,7 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
             }
         }
 
-        let tend = performance.now()
+        let tend = performance.now();
         let elapsed = tend - tstart;
         Logger.info(`provideFoldingRanges: ${elapsed}`);
         return ranges;
@@ -253,7 +253,7 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
             return;
         }
 
-        const document = editor.document
+        const document = editor.document;
         const languageId = document.languageId;
         const commentSymbols = languageCommentMap[languageId] || { start: "", end: "" };
 
@@ -263,9 +263,9 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
         if (editor.selection.isEmpty) {
             const pos = editor.selection.active;
             const ra = new vscode.Range(pos, pos.translate(0, 1));
-            const charAtPos = document.getText(ra)
-            if (charAtPos == "{" || charAtPos == "}") {
-                await vscode.commands.executeCommand("editor.action.jumpToBracket")
+            const charAtPos = document.getText(ra);
+            if (charAtPos === "{" || charAtPos === "}") {
+                await vscode.commands.executeCommand("editor.action.jumpToBracket");
                 const pos2 = editor.selection.active;
                 startLine = Math.min(pos.line, pos2.line);
                 endLine = Math.max(pos.line, pos2.line);
@@ -288,12 +288,12 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
         const startIndentation = startLineText.match(/^\s*/)?.[0] || '';
         const endIndentation = endLineText.match(/^\s*/)?.[0] || '';
 
-        const start_fold = `${startIndentation}${commentSymbols.start}{{{\n`;
-        const end_fold = `${endIndentation}${commentSymbols.start}}}}\n`;
+        const startFold = `${startIndentation}${commentSymbols.start}{{{\n`;
+        const endFold = `${endIndentation}${commentSymbols.start}}}}\n`;
 
         await editor.edit(editBuilder => {
-            editBuilder.insert(new vscode.Position(endLine + 1, 0), end_fold);
-            editBuilder.insert(new vscode.Position(startLine, 0), start_fold);
+            editBuilder.insert(new vscode.Position(endLine + 1, 0), endFold);
+            editBuilder.insert(new vscode.Position(startLine, 0), startFold);
         });
     }
     //..............................................................................................
@@ -314,13 +314,13 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
             return;
         }
 
-        const document = editor.document
+        const document = editor.document;
         const foldTree = this.foldTrees.get(document.uri.toString());
 
         if (foldTree && editor.selection.isEmpty) {
             const pos = editor.selection.active;
             let node = foldTree.nodeAt(pos.line);
-            if (node && ((pos.line == node.start) || (pos.line == node.end))) {
+            if (node && ((pos.line === node.start) || (pos.line === node.end))) {
                 const startLineLen = document.lineAt(node.start).text.length;
                 const endLineLen = document.lineAt(node.end).text.length;
                 const range1 = new vscode.Range(node.start, 0, node.start, startLineLen);
@@ -328,7 +328,7 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
                 await editor.edit(editBuilder => {
                     editBuilder.delete(range2);
                     editBuilder.delete(range1);
-                })
+                });
             }
         }
     }
@@ -350,13 +350,13 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
             return;
         }
 
-        const document = editor.document
+        const document = editor.document;
         const foldTree = this.foldTrees.get(document.uri.toString());
 
         if (foldTree && editor.selection.isEmpty) {
             const pos = editor.selection.active;
             let node = foldTree.nodeAt(pos.line);
-            if (node && ((pos.line == node.start) || (pos.line == node.end))) {
+            if (node && ((pos.line === node.start) || (pos.line === node.end))) {
                 const startLineLen = document.lineAt(node.start).text.length;
                 const endLineLen = document.lineAt(node.end).text.length;
                 const range1 = new vscode.Range(node.start, 0, node.start, startLineLen);
@@ -364,7 +364,7 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
                 await editor.edit(editBuilder => {
                     editBuilder.delete(range2);
                     editBuilder.delete(range1);
-                })
+                });
             }
         }
     }
@@ -383,13 +383,13 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
         if (!editor) {
             return;
         }
-        const document = editor.document
+        const document = editor.document;
         const foldTree = this.foldTrees.get(document.uri.toString());
 
         if (foldTree && editor.selection.isEmpty) {
             const pos = editor.selection.active;
             let node = foldTree.nodeAt(pos.line);
-            if (node && ((pos.line == node.start))) {
+            if (node && ((pos.line === node.start))) {
                 const endLineLen = document.lineAt(node.end).text.length;
                 const range = new vscode.Range(node.start, 0, node.end, endLineLen);
                 await vscode.env.clipboard.writeText(document.getText(range));
@@ -411,19 +411,19 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
         if (!editor) {
             return;
         }
-        const document = editor.document
+        const document = editor.document;
         const foldTree = this.foldTrees.get(document.uri.toString());
 
         if (foldTree && editor.selection.isEmpty) {
             const pos = editor.selection.active;
             let node = foldTree.nodeAt(pos.line);
-            if (node && ((pos.line == node.start))) {
+            if (node && ((pos.line === node.start))) {
                 const endLineLen = document.lineAt(node.end).text.length;
                 const range = new vscode.Range(node.start, 0, node.end, endLineLen);
                 await vscode.env.clipboard.writeText(document.getText(range));
                 await editor.edit(editBuilder => {
                     editBuilder.delete(range);
-                })
+                });
             }
         }
     }
@@ -440,7 +440,7 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
      * @param document - The text document for which to create the FoldTree.
      */
     createFoldTree(document: vscode.TextDocument) {
-        let t1 = performance.now()
+        let t1 = performance.now();
 
         let content: string[] = [];
         for (let i = 0; i < document.lineCount; i++) {
@@ -451,7 +451,7 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
         Logger.info('new fold tree created for \n' + document.uri.toString());
         this.foldTrees.set(document.uri.toString(), new FoldTree(content, document.languageId));
 
-        let t2 = performance.now()
+        let t2 = performance.now();
         let elapsed = t2 - t1;
         Logger.info(`createFoldTree: ${elapsed}`);
     }
@@ -467,21 +467,21 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
      * @param document - The text document for which the fold tree should be deleted.
      */
     deleteFoldTree(document: vscode.TextDocument) {
-        let t1 = performance.now()
+        let t1 = performance.now();
         Logger.info(`Deleting fold tree for ${document.uri.toString()}`);
         this.foldTrees.delete(document.uri.toString());
 
-        let t2 = performance.now()
+        let t2 = performance.now();
         let elapsed = t2 - t1;
         Logger.info(`deleteFoldTree: ${elapsed}`);
     }
     //..............................................................................................
 
     rebuildFoldTree(document: vscode.TextDocument) {
-        let t1 = performance.now()
-        Logger.info(`Rebuilding fold tree for ${document.uri.toString()}`)
-        this.deleteFoldTree(document)
-        this.createFoldTree(document)
+        let t1 = performance.now();
+        Logger.info(`Rebuilding fold tree for ${document.uri.toString()}`);
+        this.deleteFoldTree(document);
+        this.createFoldTree(document);
     }
     //..............................................................................................
 }
