@@ -15,6 +15,9 @@ jobs:
 
       - name: Create Release Tarball
         run: git archive -o source.tar.gz HEAD
+      - name: Extract tag name
+        id: extract_tag
+        run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - name: Setup Node.js
         uses: actions/setup-node@v2
@@ -45,5 +48,6 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
+          tag: ${{ env.TAG_NAME }}
           artifacts: "source.tar.gz, *.vsix" 
           bodyFile: "body.md"
