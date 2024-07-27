@@ -23,7 +23,7 @@ export class FoldNode {
         public parent: FoldNode | null,
         public level: number,
         public tag: number, 
-        public is_folded: boolean) { }
+        public isFolded: boolean) { }
 
     toJson() {
         const childrenTags = this.children.map(child => child.tag);
@@ -36,7 +36,7 @@ export class FoldNode {
             parent: parentTag,
             children: childrenTags,
             tag: this.tag, 
-            is_folded: this.is_folded
+            is_folded: this.isFolded
         };
     }
 
@@ -64,7 +64,7 @@ export interface FoldNodeVisiitor {
 
 export class FoldTree {
 
-    private roots: FoldNode[] = []
+    private roots: FoldNode[] = [];
     private nextTag: number = 0;
     //..............................................................................................
 
@@ -191,7 +191,7 @@ export class FoldTree {
         const jsonNodes: FoldNodeJson[] = [];
 
         function traverseNode(node: FoldNode | null) {
-            if (!node) return;
+            if (!node) {return;}
 
             const jsonNode = node.toJson();
             jsonNodes.push(jsonNode);
@@ -240,7 +240,7 @@ export class FoldTree {
         let nodeStack = new Stack<FoldNode>();
 
         for (let lineIndex = 0; lineIndex < this.document.length; lineIndex++) {
-            const lineText = this.document[lineIndex]
+            const lineText = this.document[lineIndex];
 
             if (startRegx.test(lineText)) {
                 level += 1;
