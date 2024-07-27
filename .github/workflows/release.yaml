@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+
+
+jobs:
+  release:
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Create Release Tarball
+        run: git archive -o source.tar.gz HEAD
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18 
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Xvfb
+        run: sudo apt-get install -y xvfb
+
+      - name: Install VS Code extension dependencies
+        run: npm install -g vsce
+
+      - name: Run tests
+        run: xvfb-run npm run test
+
+      - name: Run unit tests
+        run: npm run unittest
+
+      - name: Build extension
+        run: npm run compile  
+
+      - name: Package extension
+        run: vsce package
+      
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "source.tar.gz, *.vsix" 
+          bodyFile: "body.md"
