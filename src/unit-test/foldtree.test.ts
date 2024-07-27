@@ -2,14 +2,14 @@
 import * as assert from 'assert';
 import * as mocha from 'mocha';
 // import * as myExtension from '../../extension';
-import { FoldTree, FoldNode } from '../foldtree'
+import { FoldTree, FoldNode } from '../foldtree';
 
 
 describe('Parser Test Suite', () => {
 
     function nodeAssert(node: FoldNode | null, start: number, end: number, level: number, parent: number | null, children: number[]) {
         assert.equal(node?.start, start);
-        assert.equal(node?.end, end)
+        assert.equal(node?.end, end);
         assert.equal(node?.level, level);
         assert.equal(node?.parent?.tag, parent);
 
@@ -49,11 +49,11 @@ describe('Parser Test Suite', () => {
 
         for (let lineIndex of [0, 1, 6]) {
             let node = foldTree.nodeAt(lineIndex);
-            nodeAssert(node, 0, 6, 1, null, [1])
+            nodeAssert(node, 0, 6, 1, null, [1]);
         }
         for (let lineIndex of [2, 3, 4, 5]) {
             let node = foldTree.nodeAt(lineIndex);
-            nodeAssert(node, 2, 5, 2, 0, [])
+            nodeAssert(node, 2, 5, 2, 0, []);
         }
     });
     it('should parse more nested folds', () => {
@@ -106,10 +106,10 @@ describe('Parser Test Suite', () => {
         }
 
         let n0 = foldTree.nodeAt(2);
-        nodeAssert(n0, 2, 5, 1, null, [1])
+        nodeAssert(n0, 2, 5, 1, null, [1]);
 
         let n1 = foldTree.nodeAt(4);
-        nodeAssert(n1, 3, 4, 2, 0, [])
+        nodeAssert(n1, 3, 4, 2, 0, []);
     });
 });
 
