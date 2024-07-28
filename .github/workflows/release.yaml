@@ -45,9 +45,12 @@ jobs:
       - name: Package extension
         run: vsce package
       
+      - name: Generate release note
+        run: "bash create-release-note.bash ${{ env.TAG_NAME }}"
+      
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.TAG_NAME }}
           artifacts: "source.tar.gz, *.vsix" 
-          bodyFile: "body.md"
+          bodyFile: "release-note.md"

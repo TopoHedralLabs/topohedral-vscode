@@ -3,7 +3,7 @@
 ## [Unreleased]
 
 
-## [0.0.1] - 2024-07-15
+## [v0.0.1] - 2024-07-28
 
 Initial release of topohedral-vscode with the following features:
 
