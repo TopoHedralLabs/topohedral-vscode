@@ -51,6 +51,7 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
+          token: ${{ secrets.JF_TOKEN }}
           tag: ${{ env.TAG_NAME }}
           artifacts: "source.tar.gz, *.vsix" 
           bodyFile: "release-note.md"
