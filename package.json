@@ -50,6 +50,10 @@
         "title": "Cut Fold"
       },
       {
+        "command": "topohedral-vscode.insertTraceFold", 
+        "title": "Insert Trace Folder"
+      },
+      {
         "command": "topohedral-vscode.rebuildTree", 
         "title": "Rebuild Tree"
       },
@@ -80,8 +84,13 @@
         "when": "editorTextFocus && !editorReadonly"
       },
       {
+        "command": "topohedral-vscode.insertTraceFold",
+        "key": "F10",
+        "when": "editorTextFocus && !editorReadonly"
+      },
+      {
         "command": "topohedral-vscode.rebuildTree",
-        "key": "shift+F10",
+        "key": "shift+F12",
         "when": "editorTextFocus && !editorReadonly"
       }
     ]
