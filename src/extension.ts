@@ -468,6 +468,8 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
                 const endLineLen = document.lineAt(node.end).text.length;
                 const range = new vscode.Range(node.start, 0, node.end, endLineLen);
                 await vscode.env.clipboard.writeText(document.getText(range));
+                const nLines = node.end - node.start + 1;
+                vscode.window.showInformationMessage(`Copied ${nLines} lines`);
             }
         }
     }
@@ -499,6 +501,8 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
                 await editor.edit(editBuilder => {
                     editBuilder.delete(range);
                 });
+                const nLines = node.end - node.start + 1;
+                vscode.window.showInformationMessage(`Cut ${nLines} lines`);
             }
         }
     }
