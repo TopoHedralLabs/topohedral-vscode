@@ -6,9 +6,16 @@ import * as path from 'path';
 
 import { FoldTree, languageCommentMap } from './foldtree';
 import { Logger } from './logger';
-import { get } from 'http';
-import { error } from 'console';
 
+
+
+const traceLevels: { [key: string]: string } = {
+    "t1": "error!",
+    "t2": "warn!",
+    "t3": "info!",
+    "t4": "debug!",
+    "t5": "trace!"
+};
 
 
 // This method is called when your extension is activated
@@ -105,6 +112,52 @@ export function activate(context: vscode.ExtensionContext) {
             }
         });
     }
+    {
+        Logger.info("Registering topohedral-vscode.insertTraceFold");
+        let disposable = vscode.commands.registerCommand("topohedral-vscode.insertTraceFold", async () => {
+            const editor = vscode.window.activeTextEditor;
+            if (editor && documentOk(editor.document)) {
+                const editor = vscode.window.activeTextEditor;
+                if (!editor) {
+                    return;
+                }
+                Logger.info("Inserting trace fold for file " + editor.document.uri.toString());
+                if (editor.selection.isEmpty) {
+                    const line = editor.document.lineAt(editor.selection.start.line);
+                    const indentation = getIndentation(line);
+                    const line_str = line.text.trim();
+                    const traceCommand = traceLevels[line_str];
+                    if (traceCommand) {
+                        const insideTraceFold = await state.insideTraceFold();
+                        if (insideTraceFold) {
+                            const line_num = line.range.start.line;
+                            const col_num = indentation.length + traceCommand.length + 2;
+
+                            editor.edit((editBuilder) => {
+                                editBuilder.replace(line.range, `${indentation}${traceCommand}("")`);
+                            }).then(() => {
+                                const newPos = new vscode.Position(line_num, col_num);
+                                editor.selection = new vscode.Selection(newPos, newPos);
+                            });
+                        }
+                        else {
+
+                            const line_num = line.range.start.line + 1;
+                            const col_num = indentation.length + traceCommand.length + 2;
+
+                            editor.edit((editBuilder) => {
+                                editBuilder.replace(line.range,
+                                    `${indentation}//{{{ trace\n${indentation}${traceCommand}("")\n${indentation}//}}}`);
+                            }).then(() => {
+                                const newPos = new vscode.Position(line_num, col_num);
+                                editor.selection = new vscode.Selection(newPos, newPos);
+                            });
+                        }
+                    }
+                }
+            }
+        });
+    }
 
     {
         Logger.info("Registering topohedral-vcode.rebuildTree");
@@ -140,7 +193,7 @@ export function activate(context: vscode.ExtensionContext) {
             nLines = newDocument.lineCount;
             const testModSnippet = await getSnippet(context, "testmod");
             const testModSnippetObj = new vscode.SnippetString(testModSnippet);
-            await editor.insertSnippet(testModSnippetObj, new vscode.Position(nLines-1, 0));
+            await editor.insertSnippet(testModSnippetObj, new vscode.Position(nLines - 1, 0));
         });
     }
 
@@ -193,6 +246,11 @@ async function getSnippet(context: vscode.ExtensionContext, snippetId: string): 
     });
 }
 
+function getIndentation(line: vscode.TextLine): string {
+    const indent = line.text.match(/^\s*/)?.[0] || '';
+    return indent;
+}
+
 
 class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
     private foldTrees: Map<string, FoldTree> = new Map();
@@ -233,6 +291,24 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
         let elapsed = tend - tstart;
         Logger.info(`provideFoldingRanges: ${elapsed}`);
         return ranges;
+    }
+    //..............................................................................................
+
+    async insideTraceFold() {
+
+        const editor = vscode.window.activeTextEditor;
+
+        if (!editor) {
+            return;
+        }
+
+        let insideTrace = false;
+        if (editor.selection.isEmpty) {
+            const line = editor.selection.active.line;
+            const node = this.foldTrees.get(editor.document.uri.toString())?.nodeAt(line);
+            insideTrace = node?.title === 'trace';
+        }
+        return insideTrace;
     }
     //..............................................................................................
 
@@ -282,14 +358,9 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
 
         }
 
-        const startLineText = document.lineAt(startLine).text;
-        const endLineText = document.lineAt(endLine).text;
-
-        const startIndentation = startLineText.match(/^\s*/)?.[0] || '';
-        const endIndentation = endLineText.match(/^\s*/)?.[0] || '';
-
+        const startIndentation = getIndentation(document.lineAt(startLine));
         const startFold = `${startIndentation}${commentSymbols.start}{{{\n`;
-        const endFold = `${endIndentation}${commentSymbols.start}}}}\n`;
+        const endFold = `${startIndentation}${commentSymbols.start}}}}\n`;
 
         await editor.edit(editBuilder => {
             editBuilder.insert(new vscode.Position(endLine + 1, 0), endFold);
