@@ -13,8 +13,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Create Release Tarball
-        run: git archive -o source.tar.gz HEAD
       - name: Extract tag name
         id: extract_tag
         run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
@@ -53,5 +51,5 @@ jobs:
         with:
           token: ${{ secrets.JF_TOKEN }}
           tag: ${{ env.TAG_NAME }}
-          artifacts: "source.tar.gz, *.vsix" 
+          artifacts: "*.vsix" 
           bodyFile: "release-note.md"
