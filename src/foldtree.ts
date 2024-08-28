@@ -4,6 +4,7 @@ interface FoldNodeJson {
     start: number;
     end: number;
     level: number;
+    title: string;
     parent: number | null;
     children: number[];
     tag: number;
@@ -22,6 +23,7 @@ export class FoldNode {
         public children: FoldNode[],
         public parent: FoldNode | null,
         public level: number,
+        public title: string,
         public tag: number, 
         public isFolded: boolean) { }
 
@@ -33,6 +35,7 @@ export class FoldNode {
             start: this.start,
             end: this.end,
             level: this.level,
+            title: this.title,
             parent: parentTag,
             children: childrenTags,
             tag: this.tag, 
@@ -217,10 +220,10 @@ export class FoldTree {
      *
      * @returns A JSON string representation of the FoldTree.
      */
-    private createNode(start: number, end: number, level: number): FoldNode {
+    private createNode(start: number, end: number, level: number, title: string): FoldNode {
         const tag = this.nextTag;
         this.nextTag += 1;
-        return new FoldNode(start, end, [], null, level, tag, false);
+        return new FoldNode(start, end, [], null, level, title, tag, false);
 
     }
 
@@ -244,10 +247,16 @@ export class FoldTree {
 
             if (startRegx.test(lineText)) {
                 level += 1;
-
-                let newNode = this.createNode(lineIndex, lineIndex, level);
+                let foldTitle = ""
+                let lineParts = lineText.split(startRegx);
+                let lastPart = lineParts.pop();
+                if (lastPart && !startRegx.test(lastPart)) {
+                    if (lastPart.trim().length > 0) {
+                        foldTitle = lastPart.trim();
+                    }
+                }
+                let newNode = this.createNode(lineIndex, lineIndex, level, foldTitle);
                 nodeStack.push(newNode);
-
             }
 
             if (endRegex.test(lineText)) {

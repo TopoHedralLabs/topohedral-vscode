@@ -7,10 +7,11 @@ import { FoldTree, FoldNode } from '../foldtree';
 
 describe('Parser Test Suite', () => {
 
-    function nodeAssert(node: FoldNode | null, start: number, end: number, level: number, parent: number | null, children: number[]) {
+    function nodeAssert(node: FoldNode | null, start: number, end: number, level: number, title: string, parent: number | null, children: number[]) {
         assert.equal(node?.start, start);
         assert.equal(node?.end, end);
         assert.equal(node?.level, level);
+        assert.equal(node?.title, title);
         assert.equal(node?.parent?.tag, parent);
 
         assert.equal(node?.children.length, children.length);
@@ -21,7 +22,7 @@ describe('Parser Test Suite', () => {
 
     it('single fold', () => {
         const content =
-            `//{{{
+            `//{{{ com: this is a fold
             this is a fold
             //}}}`.split('\n');
 
@@ -31,7 +32,7 @@ describe('Parser Test Suite', () => {
 
         for (let lineIndex = 0; lineIndex < content.length; lineIndex++) {
             let node = foldTree.nodeAt(lineIndex);
-            nodeAssert(node, 0, 2, 1, null, []);
+            nodeAssert(node, 0, 2, 1, "com: this is a fold", null, []);
         }
 
     });
@@ -49,18 +50,18 @@ describe('Parser Test Suite', () => {
 
         for (let lineIndex of [0, 1, 6]) {
             let node = foldTree.nodeAt(lineIndex);
-            nodeAssert(node, 0, 6, 1, null, [1]);
+            nodeAssert(node, 0, 6, 1, "",null, [1]);
         }
         for (let lineIndex of [2, 3, 4, 5]) {
             let node = foldTree.nodeAt(lineIndex);
-            nodeAssert(node, 2, 5, 2, 0, []);
+            nodeAssert(node, 2, 5, 2, "",0, []);
         }
     });
     it('should parse more nested folds', () => {
         const content =
             `//{{{
             //{{{
-                //{{{
+                //{{{ com: title 1      
                 //}}}
                 //{{{
                 //}}}
@@ -79,13 +80,13 @@ describe('Parser Test Suite', () => {
         const foldTree = new FoldTree(content, "plaintext");
 
         let n0 = foldTree.nodeAt(3);
-        nodeAssert(n0, 2, 3, 3, 1, []);
+        nodeAssert(n0, 2, 3, 3, "com: title 1",1, []);
 
         let n1 = foldTree.nodeAt(10);
-        nodeAssert(n1, 1, 10, 2, 0, [2, 3, 4, 5]);
+        nodeAssert(n1, 1, 10, 2, "",0, [2, 3, 4, 5]);
 
         let n2 = foldTree.nodeAt(12);
-        nodeAssert(n2, 11, 12, 2, 0, []);
+        nodeAssert(n2, 11, 12, 2, "",0, []);
     });
     it('should parse file with unbalanced folds', () => {
         const content =
@@ -106,10 +107,10 @@ describe('Parser Test Suite', () => {
         }
 
         let n0 = foldTree.nodeAt(2);
-        nodeAssert(n0, 2, 5, 1, null, [1]);
+        nodeAssert(n0, 2, 5, 1, "",null, [1]);
 
         let n1 = foldTree.nodeAt(4);
-        nodeAssert(n1, 3, 4, 2, 0, []);
+        nodeAssert(n1, 3, 4, 2, "",0, []);
     });
 });
 
