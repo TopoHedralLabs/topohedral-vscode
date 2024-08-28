@@ -359,12 +359,16 @@ class TopoHedralVscodeState implements vscode.FoldingRangeProvider {
         }
 
         const startIndentation = getIndentation(document.lineAt(startLine));
-        const startFold = `${startIndentation}${commentSymbols.start}{{{\n`;
+        const startFold = `${startIndentation}${commentSymbols.start}{{{ \n`;
         const endFold = `${startIndentation}${commentSymbols.start}}}}\n`;
 
-        await editor.edit(editBuilder => {
+        editor.edit(editBuilder => {
             editBuilder.insert(new vscode.Position(endLine + 1, 0), endFold);
             editBuilder.insert(new vscode.Position(startLine, 0), startFold);
+        }).then(() => {
+            const colNum = startIndentation.length + commentSymbols.start.length + 4;
+            const newPos = new vscode.Position(startLine, colNum);
+            editor.selection = new vscode.Selection(newPos, newPos);
         });
     }
     //..............................................................................................
